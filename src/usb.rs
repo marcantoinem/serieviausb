@@ -8,9 +8,8 @@ const VENDOR_ID: u16 = 0x16c0;
 const PRODUCT_ID: u16 = 0x05dc;
 
 const USB_TYPE_VENDOR: u8 = 0x02 << 5;
-const USB_RECIP_DEVICE: u8 = 0;
-const REQUEST_READ: u8 = USB_TYPE_VENDOR | USB_RECIP_DEVICE | (1 << 7);
-const REQUEST_WRITE: u8 = USB_TYPE_VENDOR | USB_RECIP_DEVICE | (0 << 7);
+const REQUEST_READ: u8 = USB_TYPE_VENDOR | (1 << 7);
+const REQUEST_WRITE: u8 = USB_TYPE_VENDOR | (0 << 7);
 
 const USBASP_FUNC_SETSERIOS: u8 = 11;
 const USBASP_FUNC_READSER: u8 = 12;
@@ -89,9 +88,4 @@ impl SerialUsb for DeviceHandle<GlobalContext> {
 
         Ok(())
     }
-}
-
-pub fn bits_from_buffer(bytes: &[u8; 8]) -> &[u8] {
-    let buffer_size = bytes[0] as usize;
-    &bytes[1..(buffer_size + 1)]
 }

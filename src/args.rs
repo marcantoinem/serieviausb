@@ -46,20 +46,26 @@ pub struct Args {
     pub saut: Option<u32>,
 }
 
+fn bits_from_buffer(bytes: &[u8; 8]) -> &[u8] {
+    let buffer_size = bytes[0] as usize;
+    &bytes[1..(buffer_size + 1)]
+}
+
 impl DisplayingMode {
-    pub fn print(&self, buffer: &[u8]) {
+    pub fn print(&self, buffer: &[u8; 8]) {
+        let bytes = bits_from_buffer(buffer);
         match self {
             DisplayingMode::Binaire => {
-                buffer.iter().for_each(|x| print!("{:b}", x));
+                bytes.iter().for_each(|byte| print!("{byte:b}"));
             }
             DisplayingMode::Decimal => {
-                buffer.iter().for_each(|x| print!("{}", x));
+                bytes.iter().for_each(|byte| print!("{byte}"));
             }
             DisplayingMode::Hexadecimal => {
-                buffer.iter().for_each(|x| print!("{:X}", x));
+                bytes.iter().for_each(|byte| print!("{byte:X}"));
             }
             DisplayingMode::Ascii => {
-                buffer.iter().for_each(|x| print!("{}", *x as char));
+                bytes.iter().for_each(|byte| print!("{}", *byte as char));
             }
         }
     }
