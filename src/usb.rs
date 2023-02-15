@@ -1,7 +1,6 @@
-use std::time::Duration;
-
 use anyhow::{Context, Result};
 use rusb::{Device, DeviceHandle, GlobalContext};
+use std::time::Duration;
 
 // Identifiant de la carte de INF1900
 const VENDOR_ID: u16 = 0x16c0;
@@ -14,12 +13,10 @@ const REQUEST_WRITE: u8 = USB_TYPE_VENDOR | (0 << 7);
 const USBASP_FUNC_SETSERIOS: u8 = 11;
 const USBASP_FUNC_READSER: u8 = 12;
 const USBASP_FUNC_WRITESER: u8 = 13;
-
 const USBASP_MODE_PARITYN: u16 = 1;
-
 const USBASP_MODE_SETBAUD2400: u16 = 0x13;
-const BAUDS_RATE: u16 = USBASP_MODE_SETBAUD2400;
-const PACKET_BITS: u16 = 8;
+
+pub const PACKET_SIZE: u16 = 8;
 
 fn is_device_corresponding(device: Device<GlobalContext>) -> Option<Device<GlobalContext>> {
     let device_descriptor = device.device_descriptor().ok()?;
@@ -44,8 +41,8 @@ impl SerialUsb for DeviceHandle<GlobalContext> {
     fn init_serial_usb(&self) -> Result<()> {
         let mut buffer = [0; 4];
         let cmd = [
-            BAUDS_RATE as u8,
-            PACKET_BITS as u8,
+            USBASP_MODE_SETBAUD2400 as u8,
+            PACKET_SIZE as u8,
             USBASP_MODE_PARITYN as u8,
             0,
         ];
@@ -53,7 +50,7 @@ impl SerialUsb for DeviceHandle<GlobalContext> {
         let nb_bytes: usize = self.read_control(
             REQUEST_READ,
             USBASP_FUNC_SETSERIOS,
-            (PACKET_BITS << 8) | BAUDS_RATE,
+            (PACKET_SIZE << 8) | USBASP_MODE_SETBAUD2400,
             USBASP_MODE_PARITYN,
             &mut buffer,
             Duration::from_secs(5),
@@ -63,7 +60,7 @@ impl SerialUsb for DeviceHandle<GlobalContext> {
             .context("Failed to set serial parameters")
     }
 
-    fn read_serial_usb(&self, buffer: &mut [u8; 8]) -> Result<()> {
+    fn read_serial_usb(&self, buffer: &mut [u8; PACKET_SIZE as usize]) -> Result<()> {
         self.read_control(
             REQUEST_READ,
             USBASP_FUNC_READSER,

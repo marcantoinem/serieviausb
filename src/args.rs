@@ -1,6 +1,8 @@
 use clap::{Parser, Subcommand, ValueEnum};
 use derive_more::Display;
 
+use crate::usb::PACKET_SIZE;
+
 #[derive(Debug, Subcommand)]
 pub enum SerialMode {
     /// Pour envoyer des données vers la la carte. Cette option demande l'utilisation de l'option -f
@@ -35,24 +37,24 @@ pub enum DisplayingMode {
 pub struct Args {
     #[command(subcommand)]
     pub mode: SerialMode,
-    /// Terminer le programme directement apres le transfert de n octets. Sans cette option, lit ou écrit indéfiniment.
-    #[arg(short, long)]
-    pub nb_bytes: Option<u32>,
+    // /// Terminer le programme directement apres le transfert de n octets. Sans cette option, lit ou écrit indéfiniment.
+    // #[arg(short, long)]
+    // pub nb_bytes: Option<u32>,
     /// Afficher les octets envoyés ou reçus dans une représentation spécifique.
     #[arg(short, long, default_value_t = DisplayingMode::Ascii)]
     pub affichage: DisplayingMode,
-    /// Effectue un retour à la ligne à chaque n caractère.
-    #[arg(short, long)]
-    pub saut: Option<u32>,
+    // /// Effectue un retour à la ligne à chaque n caractère.
+    // #[arg(short, long)]
+    // pub saut: Option<u32>,
 }
 
-fn bits_from_buffer(bytes: &[u8; 8]) -> &[u8] {
+fn bits_from_buffer(bytes: &[u8; PACKET_SIZE as usize]) -> &[u8] {
     let buffer_size = bytes[0] as usize;
     &bytes[1..(buffer_size + 1)]
 }
 
 impl DisplayingMode {
-    pub fn print(&self, buffer: &[u8; 8]) {
+    pub fn print(&self, buffer: &[u8; PACKET_SIZE as usize]) {
         let bytes = bits_from_buffer(buffer);
         match self {
             DisplayingMode::Binaire => {

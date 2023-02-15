@@ -1,16 +1,11 @@
-#![feature(iter_array_chunks)]
 use anyhow::{Context, Result};
 use args::{Args, DisplayingMode, SerialMode};
 use clap::Parser;
 use indicatif::{ProgressIterator, ProgressStyle};
 use rusb::{DeviceHandle, GlobalContext};
-use std::sync::atomic::AtomicBool;
-use std::{
-    fs::File,
-    io::{BufReader, Read},
-    sync::{atomic::Ordering, Arc},
-    time::Duration,
-};
+use std::io::Read;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use usb::{find_device, SerialUsb};
 
 mod args;
@@ -21,7 +16,7 @@ fn write_mode(
     handle: &DeviceHandle<GlobalContext>,
     sigint_requested: &AtomicBool,
 ) -> Result<()> {
-    let mut f = BufReader::new(File::open(file)?);
+    let mut f = std::fs::File::open(file)?;
     let mut file_buffer = vec![];
     f.read_to_end(&mut file_buffer)?;
     let style = ProgressStyle::with_template(
@@ -29,11 +24,11 @@ fn write_mode(
     )?;
     for buffer in file_buffer.chunks(8).progress_with_style(style) {
         if sigint_requested.load(Ordering::Relaxed) {
-            println!("Écriture interrompu par l'utilisateur");
+            println!("\n-Écriture interrompu par l'utilisateur-");
             return Ok(());
         }
         handle.write_serial_usb(buffer)?;
-        std::thread::sleep(Duration::from_millis(5));
+        std::thread::sleep(std::time::Duration::from_millis(5));
     }
     Ok(())
 }
@@ -45,23 +40,27 @@ fn read_mode(
 ) -> Result<()> {
     while !sigint_requested.load(Ordering::Relaxed) {
         let mut buffer = [0xFF; 8];
-        // Read mode.
         handle.read_serial_usb(&mut buffer)?;
         mode.print(&buffer);
-        std::thread::sleep(Duration::from_millis(20));
+        std::thread::sleep(std::time::Duration::from_millis(20));
     }
     println!("\n-Arrêt de lecture-");
     Ok(())
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+fn initialize_sigint_handler() -> Arc<AtomicBool> {
     let sigint_requested = Arc::new(AtomicBool::new(false));
     let sigint_handler = Arc::clone(&sigint_requested);
     ctrlc::set_handler(move || {
         sigint_handler.store(true, Ordering::Relaxed);
     })
     .expect("L'initialisation de Ctrl+C a échoué.");
+    sigint_requested
+}
+
+fn main() -> Result<()> {
+    let args = Args::parse();
+    let sigint_requested = initialize_sigint_handler();
     let device = find_device().context("Device not found")?;
     let mut handle = device.open()?;
     handle.init_serial_usb()?;
