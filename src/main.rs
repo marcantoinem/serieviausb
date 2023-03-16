@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use args::{Args, DisplayingMode, SerialMode};
+use args::{Args, DisplayingMode};
 use clap::Parser;
 use indicatif::{ProgressIterator, ProgressStyle};
 use rusb::{DeviceHandle, GlobalContext};
@@ -22,7 +22,8 @@ fn write_mode(
     let style = ProgressStyle::with_template(
         "[{elapsed_precise}] {bar:40.green/red} {pos:>7}/{len:7} {msg}",
     )?;
-    for buffer in file_buffer.chunks(8).progress_with_style(style) {
+    println!("{:?}", file_buffer);
+    for buffer in file_buffer.chunks(7).progress_with_style(style) {
         if sigint_requested.load(Ordering::Relaxed) {
             println!("\n-Écriture interrompu par l'utilisateur-");
             return Ok(());
@@ -30,6 +31,7 @@ fn write_mode(
         handle.write_serial_usb(buffer)?;
         std::thread::sleep(std::time::Duration::from_millis(5));
     }
+    println!("{} bits ont été écris.", file_buffer.len());
     Ok(())
 }
 
@@ -61,12 +63,14 @@ fn initialize_sigint_handler() -> Arc<AtomicBool> {
 fn main() -> Result<()> {
     let args = Args::parse();
     let sigint_requested = initialize_sigint_handler();
-    let device = find_device().context("Device not found")?;
+    let device = find_device().context("La carte mère est introuvable.")?;
     let mut handle = device.open()?;
     handle.init_serial_usb()?;
-    match args.mode {
-        SerialMode::Ecriture { fichier } => write_mode(fichier, &handle, &sigint_requested)?,
-        SerialMode::Lecture => read_mode(&mut handle, &sigint_requested, args.affichage)?,
+    if args.lecture {
+        read_mode(&mut handle, &sigint_requested, args.affichage)?;
+    } else if args.ecriture {
+        let fichier = args.fichier.context("Fichier non fourni")?;
+        write_mode(fichier, &handle, &sigint_requested)?;
     }
     Ok(())
 }

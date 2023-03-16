@@ -1,19 +1,7 @@
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{ArgGroup, Parser, ValueEnum};
 use derive_more::Display;
 
 use crate::usb::PACKET_SIZE;
-
-#[derive(Debug, Subcommand)]
-pub enum SerialMode {
-    /// Pour envoyer des données vers la la carte. Cette option demande l'utilisation de l'option -f
-    #[command(arg_required_else_help = true)]
-    Ecriture {
-        #[arg(short, long)]
-        fichier: String,
-    },
-    /// Pour réception des données en provenance de la carte
-    Lecture,
-}
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug, Display)]
 pub enum DisplayingMode {
@@ -34,15 +22,23 @@ pub enum DisplayingMode {
     about = "Permet de lire et d'écrire sur le robot de INF1900 par USB en série.",
     long_about = "Programme permettant de recevoir et d'envoyer des octets de facon sérielle mais indirectement via le cable USB pour échange avec la carte microcontroleur du cours inf1900. Ce programme est fortement inspiré de serieViaUSB écrit par Matthew Khouzam, Jerome Collin, Michaël Ferris et Mathieu Marengère-Gosselin."
 )]
+#[clap(group(
+            ArgGroup::new("Mode")
+                .required(true)
+                .args(&["lecture", "ecriture"])))
+]
 pub struct Args {
-    #[command(subcommand)]
-    pub mode: SerialMode,
-    // /// Terminer le programme directement apres le transfert de n octets. Sans cette option, lit ou écrit indéfiniment.
-    // #[arg(short, long)]
-    // pub nb_bytes: Option<u32>,
+    /// Pour réception des données en provenance de la carte
+    #[arg(short, long)]
+    pub lecture: bool,
+    /// Pour envoyer des données vers la la carte. Cette option demande l'utilisation de l'option -f
+    #[arg(short, long)]
+    pub ecriture: bool,
     /// Afficher les octets envoyés ou reçus dans une représentation spécifique.
     #[arg(short, long, default_value_t = DisplayingMode::Ascii)]
     pub affichage: DisplayingMode,
+
+    pub fichier: Option<String>,
     // /// Effectue un retour à la ligne à chaque n caractère.
     // #[arg(short, long)]
     // pub saut: Option<u32>,
@@ -67,7 +63,15 @@ impl DisplayingMode {
                 bytes.iter().for_each(|byte| print!("{byte:X}"));
             }
             DisplayingMode::Ascii => {
-                bytes.iter().for_each(|byte| print!("{}", *byte as char));
+                bytes
+                    .iter()
+                    .filter(|x| {
+                        x.is_ascii_alphanumeric()
+                            | x.is_ascii_control()
+                            | x.is_ascii_whitespace()
+                            | x.is_ascii_graphic()
+                    })
+                    .for_each(|byte| print!("{}", *byte as char));
             }
         }
     }

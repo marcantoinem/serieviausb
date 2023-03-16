@@ -74,12 +74,14 @@ impl SerialUsb for DeviceHandle<GlobalContext> {
     }
 
     fn write_serial_usb(&self, buffer: &[u8]) -> Result<()> {
+        let mut new_buffer: Vec<u8> = buffer.iter().map(|x| *x).collect();
+        new_buffer.insert(0, new_buffer.len() as u8);
         self.write_control(
             REQUEST_WRITE,
             USBASP_FUNC_WRITESER,
             0,
             0,
-            buffer,
+            &new_buffer,
             Duration::from_secs(5),
         )?;
 
