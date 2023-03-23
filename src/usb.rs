@@ -8,7 +8,7 @@ const PRODUCT_ID: u16 = 0x05dc;
 
 const USB_TYPE_VENDOR: u8 = 0x02 << 5;
 const REQUEST_READ: u8 = USB_TYPE_VENDOR | (1 << 7);
-const REQUEST_WRITE: u8 = USB_TYPE_VENDOR | (0 << 7);
+const REQUEST_WRITE: u8 = USB_TYPE_VENDOR;
 
 const USBASP_FUNC_SETSERIOS: u8 = 11;
 const USBASP_FUNC_READSER: u8 = 12;
@@ -53,7 +53,7 @@ impl SerialUsb for DeviceHandle<GlobalContext> {
             (PACKET_SIZE << 8) | USBASP_MODE_SETBAUD2400,
             USBASP_MODE_PARITYN,
             &mut buffer,
-            Duration::from_secs(5),
+            Duration::from_secs(2),
         )?;
         (cmd == buffer && nb_bytes == 4)
             .then_some(())
@@ -67,14 +67,14 @@ impl SerialUsb for DeviceHandle<GlobalContext> {
             0,
             0,
             buffer,
-            Duration::from_secs(5),
+            Duration::from_secs(2),
         )?;
 
         Ok(())
     }
 
     fn write_serial_usb(&self, buffer: &[u8]) -> Result<()> {
-        let mut new_buffer: Vec<u8> = buffer.iter().map(|x| *x).collect();
+        let mut new_buffer = buffer.to_vec();
         new_buffer.insert(0, new_buffer.len() as u8);
         self.write_control(
             REQUEST_WRITE,
@@ -82,7 +82,7 @@ impl SerialUsb for DeviceHandle<GlobalContext> {
             0,
             0,
             &new_buffer,
-            Duration::from_secs(5),
+            Duration::from_secs(2),
         )?;
 
         Ok(())

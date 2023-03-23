@@ -1,54 +1,12 @@
 use anyhow::{Context, Result};
-use args::{Args, DisplayingMode};
 use clap::Parser;
-use indicatif::{ProgressIterator, ProgressStyle};
-use rusb::{DeviceHandle, GlobalContext};
-use std::io::Read;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use usb::{find_device, SerialUsb};
+use usb::SerialUsb;
 
 mod args;
+mod modes;
 mod usb;
-
-fn write_mode(
-    file: String,
-    handle: &DeviceHandle<GlobalContext>,
-    sigint_requested: &AtomicBool,
-) -> Result<()> {
-    let mut f = std::fs::File::open(file)?;
-    let mut file_buffer = vec![];
-    f.read_to_end(&mut file_buffer)?;
-    let style = ProgressStyle::with_template(
-        "[{elapsed_precise}] {bar:40.green/red} {pos:>7}/{len:7} {msg}",
-    )?;
-    println!("{:?}", file_buffer);
-    for buffer in file_buffer.chunks(7).progress_with_style(style) {
-        if sigint_requested.load(Ordering::Relaxed) {
-            println!("\n-Écriture interrompu par l'utilisateur-");
-            return Ok(());
-        }
-        handle.write_serial_usb(buffer)?;
-        std::thread::sleep(std::time::Duration::from_millis(5));
-    }
-    println!("{} bits ont été écris.", file_buffer.len());
-    Ok(())
-}
-
-fn read_mode(
-    handle: &mut DeviceHandle<GlobalContext>,
-    sigint_requested: &AtomicBool,
-    mode: DisplayingMode,
-) -> Result<()> {
-    while !sigint_requested.load(Ordering::Relaxed) {
-        let mut buffer = [0xFF; 8];
-        handle.read_serial_usb(&mut buffer)?;
-        mode.print(&buffer);
-        std::thread::sleep(std::time::Duration::from_millis(20));
-    }
-    println!("\n-Arrêt de lecture-");
-    Ok(())
-}
 
 fn initialize_sigint_handler() -> Arc<AtomicBool> {
     let sigint_requested = Arc::new(AtomicBool::new(false));
@@ -60,17 +18,29 @@ fn initialize_sigint_handler() -> Arc<AtomicBool> {
     sigint_requested
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+fn serie_via_usb() -> Result<()> {
+    let args = args::Args::parse();
     let sigint_requested = initialize_sigint_handler();
-    let device = find_device().context("La carte mère est introuvable.")?;
+    let device = usb::find_device().context("La carte mère est introuvable.")?;
     let mut handle = device.open()?;
     handle.init_serial_usb()?;
-    if args.lecture {
-        read_mode(&mut handle, &sigint_requested, args.affichage)?;
+    if args.svg && args.lecture {
+        modes::read_svg(&mut handle, &sigint_requested)?;
+    } else if args.svg && args.ecriture {
+        let fichier = args.fichier.context("Fichier non fourni")?;
+        modes::write_svg(fichier, &handle, &sigint_requested)?;
+    } else if args.lecture {
+        modes::read(&mut handle, &sigint_requested, args.affichage)?;
     } else if args.ecriture {
         let fichier = args.fichier.context("Fichier non fourni")?;
-        write_mode(fichier, &handle, &sigint_requested)?;
+        modes::write(fichier, &handle, &sigint_requested)?;
     }
+
     Ok(())
+}
+
+fn main() {
+    if let Err(error) = serie_via_usb() {
+        color_print::cprintln!("<red>Erreur: {}</>", error);
+    }
 }
