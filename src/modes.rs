@@ -12,7 +12,8 @@ use resvg::{
 };
 use rusb::{DeviceHandle, GlobalContext};
 use std::{
-    io::{Cursor, Read},
+    fs::File,
+    io::{Cursor, Read, Write},
     sync::atomic::{AtomicBool, Ordering},
     time::{Duration, Instant},
 };
@@ -39,26 +40,31 @@ pub fn write(file: String, handle: &Handle, sigint: &AtomicBool) -> Result<()> {
     Ok(())
 }
 
-pub fn read(handle: &mut Handle, sigint: &AtomicBool, mode: DisplayingMode) -> Result<()> {
+pub fn read(
+    handle: &mut Handle,
+    sigint: &AtomicBool,
+    mode: DisplayingMode,
+    saut: Option<u32>,
+) -> Result<()> {
+    let mut pos = 0;
     while !sigint.load(Ordering::Relaxed) {
         let mut buffer = [0xff; 8];
         handle.read_serial_usb(&mut buffer)?;
-        mode.print(&buffer);
+        mode.print(&buffer, saut, &mut pos);
         std::thread::sleep(std::time::Duration::from_millis(20));
     }
     cprintln!("<red>Arrêt de lecture</>");
     Ok(())
 }
 
-pub fn read_svg(handle: &mut Handle, sigint: &AtomicBool) -> Result<()> {
+pub fn read_svg(handle: &mut Handle, sigint: &AtomicBool, sortie: Option<String>) -> Result<()> {
     let mut buffer = [0x00; 8];
     let mut data: Vec<u8> = vec![];
     let time = Instant::now();
     cprintln!(
-        "<yellow>{:.2}s </><green>En attente du bit de commencement</>",
+        "<yellow>{:.2}s </>\t<green>En attente de l'octet de commencement (0x02)</>",
         time.elapsed().as_secs_f64()
     );
-
     loop {
         handle.read_serial_usb(&mut buffer)?;
         if let Some(position) = bits_from_buffer(&buffer).iter().position(|x| x == &2) {
@@ -74,7 +80,7 @@ pub fn read_svg(handle: &mut Handle, sigint: &AtomicBool) -> Result<()> {
     }
 
     cprintln!(
-        "<yellow>{:.2}s </><green>Début de l'image reçue, en attente du bit de fin<</>",
+        "<yellow>{:.2}s </>\t<green>Début de l'image reçue, en attente de l'octet de fin (0x03)</>",
         time.elapsed().as_secs_f64()
     );
 
@@ -96,7 +102,7 @@ pub fn read_svg(handle: &mut Handle, sigint: &AtomicBool) -> Result<()> {
     }
 
     cprintln!(
-        "<yellow>{:.2}s </><green>Fin de l'image reçue, en attente du bit de fin de checksum<</>",
+        "<yellow>{:.2}s </><green>\tFin de l'image reçue, en attente de l'octet de fin de checksum (0x04)</>",
         time.elapsed().as_secs_f64()
     );
 
@@ -118,7 +124,8 @@ pub fn read_svg(handle: &mut Handle, sigint: &AtomicBool) -> Result<()> {
     let computed_checksum = crc32fast::hash(&data);
     let checksum: String = checksum.iter().rev().map(|x| format!("{:X}", x)).collect();
     cprintln!(
-        "<red>Fin du checksum: {} {:X}</red>",
+        "<yellow>{:.2}s </>\t<green>Fin du checksum: {} {:X}</>",
+        time.elapsed().as_secs_f64(),
         checksum,
         computed_checksum
     );
@@ -139,18 +146,31 @@ pub fn read_svg(handle: &mut Handle, sigint: &AtomicBool) -> Result<()> {
     );
 
     let png = pixmap.encode_png()?;
-    let img = image::io::Reader::new(Cursor::new(png))
+    let img = image::io::Reader::new(Cursor::new(&png))
         .with_guessed_format()?
         .decode()?;
     let term_size = terminal_size::terminal_size()
         .context("Impossibilité d'obtenir les dimensions du terminal.")?;
     let conf = Config {
-        x: 0,
-        y: (size.1 / term_size.1 .0 as u32 + 1) as i16,
-        width: Some(size.0 / term_size.0 .0 as u32),
+        absolute_offset: false,
+        width: Some(term_size.0 .0 as u32),
         height: None,
         ..Default::default()
     };
+
+    if let Some(sortie) = sortie {
+        let mut file = File::create(&sortie)?;
+        if &sortie[sortie.len() - 3..] == "png" {
+            file.write_all(&png)?;
+        } else {
+            file.write_all(&data)?;
+        }
+        cprintln!(
+            "<yellow>{:.2}s </>\t<green>Fichier écrit à {}</>",
+            time.elapsed().as_secs_f64(),
+            sortie
+        );
+    }
 
     viuer::print(&img, &conf).context("L'impression de l'image dans la terminal a échouée")?;
 
@@ -183,16 +203,15 @@ pub fn write_svg(file: String, handle: &Handle, sigint: &AtomicBool) -> Result<(
     )?;
     for buffer in file_buffer.chunks(7).progress_with_style(style) {
         if sigint.load(Ordering::Relaxed) {
-            cprintln!("<red>Écriture interrompu par l'utilisateur</red>");
+            cprintln!("<red>Écriture interrompu par l'utilisateur</>");
             return Ok(());
         }
         handle.write_serial_usb(buffer)?;
         std::thread::sleep(Duration::from_millis(40));
     }
     cprintln!(
-        "<green>{:X}{:X}bytes écrits avec la checksum {:X}</>",
-        first_byte,
-        second_byte,
+        "<green>{} octets écrits avec la checksum {:X}</>",
+        first_byte | second_byte,
         checksum
     );
     Ok(())

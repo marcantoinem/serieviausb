@@ -20,7 +20,10 @@ pub enum DisplayingMode {
     author = "Marc-Antoine Manningham, Charles Khouzry",
     version = "0.1",
     about = "Permet de lire et d'écrire sur le robot de INF1900 par USB en série.",
-    long_about = "Programme permettant de recevoir et d'envoyer des octets de facon sérielle mais indirectement via le cable USB pour échange avec la carte microcontroleur du cours inf1900. Ce programme est fortement inspiré de serieViaUSB écrit par Matthew Khouzam, Jérome Collin, Michaël Ferris et Mathieu Marengère-Gosselin."
+    long_about = "Programme permettant de recevoir et d'envoyer des octets de facon
+     sérielle mais indirectement via le cable USB pour échange avec la carte microcontrôleur 
+     du cours inf1900. Ce programme est fortement inspiré de serieViaUSB écrit par Matthew 
+     Khouzam, Jérome Collin, Michaël Ferris et Mathieu Marengère-Gosselin."
 )]
 #[clap(group(
             ArgGroup::new("Mode")
@@ -44,14 +47,11 @@ pub struct Args {
     #[arg(short, long, default_value_t = DisplayingMode::Ascii)]
     pub affichage: DisplayingMode,
 
-    /// Pour enregistrer dans un fichier de sortie ce qui a été reçu en entrée.
-    #[arg(short, long)]
-    pub output: Option<String>,
-
     pub fichier: Option<String>,
-    // /// Effectue un retour à la ligne à chaque n caractère.
-    // #[arg(short, long)]
-    // pub saut: Option<u32>,
+
+    /// Effectue un retour à la ligne à chaque n caractère.
+    #[arg(short, long)]
+    pub retour: Option<u32>,
 }
 
 pub fn bits_from_buffer(bytes: &[u8; PACKET_SIZE as usize]) -> &[u8] {
@@ -59,18 +59,37 @@ pub fn bits_from_buffer(bytes: &[u8; PACKET_SIZE as usize]) -> &[u8] {
     &bytes[1..(buffer_size + 1)]
 }
 
+fn print_saut(pos: &mut u32, saut: Option<u32>) {
+    *pos += 1;
+    if let Some(saut) = saut {
+        if saut == *pos {
+            println!();
+            *pos = 0;
+        }
+    }
+}
+
 impl DisplayingMode {
-    pub fn print(&self, buffer: &[u8; PACKET_SIZE as usize]) {
+    pub fn print(&self, buffer: &[u8; PACKET_SIZE as usize], saut: Option<u32>, pos: &mut u32) {
         let bytes = bits_from_buffer(buffer);
         match self {
             DisplayingMode::Binaire => {
-                bytes.iter().for_each(|byte| print!("{byte:b}"));
+                bytes.iter().for_each(|byte| {
+                    print!("{byte:b}");
+                    print_saut(pos, saut);
+                });
             }
             DisplayingMode::Decimal => {
-                bytes.iter().for_each(|byte| print!("{byte}"));
+                bytes.iter().for_each(|byte| {
+                    print!("{byte}");
+                    print_saut(pos, saut)
+                });
             }
             DisplayingMode::Hexadecimal => {
-                bytes.iter().for_each(|byte| print!("{byte:X}"));
+                bytes.iter().for_each(|byte| {
+                    print!("{byte:X}");
+                    print_saut(pos, saut)
+                });
             }
             DisplayingMode::Ascii => {
                 bytes
@@ -81,7 +100,10 @@ impl DisplayingMode {
                             | x.is_ascii_whitespace()
                             | x.is_ascii_graphic()
                     })
-                    .for_each(|byte| print!("{}", *byte as char));
+                    .for_each(|byte| {
+                        print!("{}", *byte as char);
+                        print_saut(pos, saut)
+                    });
             }
         }
     }
