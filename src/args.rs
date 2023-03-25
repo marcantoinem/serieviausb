@@ -20,10 +20,7 @@ pub enum DisplayingMode {
     author = "Marc-Antoine Manningham, Charles Khouzry",
     version = "0.1",
     about = "Permet de lire et d'écrire sur le robot de INF1900 par USB en série.",
-    long_about = "Programme permettant de recevoir et d'envoyer des octets de facon
-     sérielle mais indirectement via le cable USB pour échange avec la carte microcontrôleur 
-     du cours inf1900. Ce programme est fortement inspiré de serieViaUSB écrit par Matthew 
-     Khouzam, Jérome Collin, Michaël Ferris et Mathieu Marengère-Gosselin."
+    long_about = "Programme permettant de recevoir et d'envoyer des octets de facon sérielle mais indirectement via le cable USB pour échange avec la carte microcontrôleur du cours inf1900. Ce programme est fortement inspiré de serieViaUSB écrit par Matthew Khouzam, Jérome Collin, Michaël Ferris et Mathieu Marengère-Gosselin."
 )]
 #[clap(group(
             ArgGroup::new("Mode")
