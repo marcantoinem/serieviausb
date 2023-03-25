@@ -19,7 +19,7 @@ Ce programme n'est pas conçu pour reproduire fidèlement les options de serieVi
 2. Cloner ce repo et aller à la racine du repo. `git clone https://github.com/marcantoinem/serieviausb && cd serieviausb`
 
 3. Compiler en mode release avec la commande `cargo build --release`
-> Plusieurs flags d'optimisations assez lourd pour le processeur sont activés, ce qui rend la compilation plus lente. (environ 1 minute)
+> Plusieurs flags d'optimisations assez lourds pour le processeur sont activés, ce qui rend la compilation plus lente. (environ 1 minute)
 Si le temps de compilation est trop long, il est possible de désactiver la lto en commentant la ligne `# lto = "fat"` dans `Cargo.toml`
 
 4. Copier l'exécutable situé à `target/release/serieviausb` dans un emplacement dans la [PATH](https://en.wikipedia.org/wiki/PATH_(variable)) pour avoir la commande disponible partout.

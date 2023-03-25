@@ -1,3 +1,5 @@
+use std::io::Write;
+
 use clap::{ArgGroup, Parser, ValueEnum};
 use derive_more::Display;
 
@@ -72,19 +74,19 @@ impl DisplayingMode {
         match self {
             DisplayingMode::Binaire => {
                 bytes.iter().for_each(|byte| {
-                    print!("{byte:b}");
+                    print!("\r{byte:b}");
                     print_saut(pos, saut);
                 });
             }
             DisplayingMode::Decimal => {
                 bytes.iter().for_each(|byte| {
-                    print!("{byte}");
+                    print!("\r{byte}");
                     print_saut(pos, saut)
                 });
             }
             DisplayingMode::Hexadecimal => {
                 bytes.iter().for_each(|byte| {
-                    print!("{byte:X}");
+                    print!("\r{byte:X}");
                     print_saut(pos, saut)
                 });
             }
@@ -98,10 +100,12 @@ impl DisplayingMode {
                             | x.is_ascii_graphic()
                     })
                     .for_each(|byte| {
-                        print!("{}", *byte as char);
+                        print!("\r{}", *byte as char);
                         print_saut(pos, saut)
                     });
             }
         }
+        // Ignore error of flushing stdout
+        let Ok(_) = std::io::stdout().flush() else {return};
     }
 }
