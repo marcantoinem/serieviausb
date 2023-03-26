@@ -207,7 +207,7 @@ pub fn write_svg(file: String, handle: &Handle, sigint: &AtomicBool) -> Result<(
             return Ok(());
         }
         handle.write_serial_usb(buffer)?;
-        std::thread::sleep(Duration::from_millis(40));
+        std::thread::sleep(Duration::from_millis(50));
     }
     cprintln!(
         "<green>{} octets écrits avec la checksum {:X}</>",
