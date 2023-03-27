@@ -51,7 +51,6 @@ pub fn read(
         let mut buffer = [0xff; 8];
         handle.read_serial_usb(&mut buffer)?;
         mode.print(&buffer, saut, &mut pos);
-        std::thread::sleep(std::time::Duration::from_millis(80));
     }
     cprintln!("<red>Arrêt de lecture</>");
     Ok(())
