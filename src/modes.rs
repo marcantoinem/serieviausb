@@ -121,9 +121,9 @@ pub fn read_svg(handle: &mut Handle, sigint: &AtomicBool, sortie: Option<String>
     }
 
     let computed_checksum = crc32fast::hash(&data);
-    let checksum: String = checksum.iter().rev().map(|x| format!("{:X}", x)).collect();
+    let checksum: String = checksum.into_iter().map(|x| x as char).collect();
     cprintln!(
-        "<yellow>{:.2}s </>\t<green>Fin du checksum: {} {:X}</>",
+        "<yellow>{:.2}s </>\t<green>Fin du checksum: {} {:x}</>",
         time.elapsed().as_secs_f64(),
         checksum,
         computed_checksum
