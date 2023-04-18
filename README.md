@@ -12,17 +12,20 @@ Ce programme n'est pas conçu pour reproduire fidèlement les options de serieVi
 - Contient de la couleur
 - Peut enregistrer le svg dans un fichier
 - Peut convertir le svg en png et l'enregistrer dans un fichier
+- Pour avoir des images à pleine résolution, utiliser https://github.com/kovidgoyal/kitty ou https://iterm2.com/index.html comme terminal
 
 ## Comment compiler
 1. Installer Rust (si pas installé) avec `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh` voir [Install Rust](https://www.rust-lang.org/tools/install)
 
-2. Cloner ce repo et aller à la racine du repo. `git clone https://github.com/marcantoinem/serieviausb && cd serieviausb`
+2. Fermer et rouvrir le terminal pour relancer le shell.
 
-3. Compiler en mode release avec la commande `cargo build --release`
+3. Cloner ce repo et aller à la racine du repo. `git clone https://github.com/marcantoinem/serieviausb && cd serieviausb`
+
+4. Compiler en mode release avec la commande `cargo build --release`
 > Plusieurs flags d'optimisations assez lourds pour le processeur sont activés, ce qui rend la compilation plus lente. (environ 1 minute)
 Si le temps de compilation est trop long, il est possible de désactiver la lto en commentant la ligne `# lto = "fat"` dans `Cargo.toml`
 
-4. Copier l'exécutable situé à `target/release/serieviausb` dans un emplacement dans la [PATH](https://en.wikipedia.org/wiki/PATH_(variable)) pour avoir la commande disponible partout.
+5. Copier l'exécutable situé à `target/release/serieviausb` dans un emplacement dans la [PATH](https://en.wikipedia.org/wiki/PATH_(variable)) pour avoir la commande disponible partout.
 
 ## Screenshots
 ![Menu d'aide](screenshots/help.png)
