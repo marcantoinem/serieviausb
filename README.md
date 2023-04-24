@@ -9,13 +9,13 @@ Ce programme n'est pas conçu pour reproduire fidèlement les options de serieVi
 - Gère les interruptions par ctrl-c
 - Imprime les messages d'erreurs avec de la couleur
 
-## Comment compiler
+## Comment installer
 1. Installer Rust (si pas installé) avec `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh` voir [Install Rust](https://www.rust-lang.org/tools/install)
 
 2. Fermer et rouvrir le terminal pour relancer le shell.
 
 3. Installer serieviausb avec `cargo install --git https://github.com/marcantoinem/serieviausb`
 
-## Screenshots
+## Captures d'écran
 ![Menu d'aide](screenshots/help.png)
 ![Envoi de fichier](screenshots/envoi.png)
