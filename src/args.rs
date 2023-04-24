@@ -1,9 +1,7 @@
-use std::io::Write;
-
+use crate::usb::PACKET_SIZE;
 use clap::{ArgGroup, Parser, ValueEnum};
 use derive_more::Display;
-
-use crate::usb::PACKET_SIZE;
+use std::io::Write;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug, Display)]
 pub enum DisplayingMode {

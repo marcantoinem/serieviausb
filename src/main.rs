@@ -35,7 +35,6 @@ fn serie_via_usb() -> Result<()> {
         let fichier = args.fichier.context("Fichier non fourni")?;
         modes::write(fichier, &handle, &sigint_requested)?;
     }
-
     Ok(())
 }
 
