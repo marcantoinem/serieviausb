@@ -6,6 +6,7 @@ use rusb::{DeviceHandle, GlobalContext};
 use std::fs::File;
 use std::io::Read;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::thread;
 use std::time::Duration;
 
 const WRITE_DELAY: Duration = Duration::from_millis(80);
@@ -28,7 +29,7 @@ pub fn write(
             return Ok(());
         }
         handle.write_serial_usb(buffer)?;
-        std::thread::sleep(WRITE_DELAY);
+        thread::sleep(WRITE_DELAY);
     }
     cprintln!("<green>{} bits ont été écris.</>", file_buffer.len());
     Ok(())
@@ -45,7 +46,7 @@ pub fn read(
         let mut buffer = [0xff; 8];
         handle.read_serial_usb(&mut buffer)?;
         mode.print(&buffer, saut, &mut pos);
-        std::thread::sleep(READ_DELAY);
+        thread::sleep(READ_DELAY);
     }
     cprintln!("<red>Arrêt de lecture</>");
     Ok(())

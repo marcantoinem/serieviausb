@@ -14,10 +14,10 @@ const REQUEST_WRITE: u8 = USB_TYPE_VENDOR;
 const USBASP_FUNC_SETSERIOS: u8 = 11;
 const USBASP_FUNC_READSER: u8 = 12;
 const USBASP_FUNC_WRITESER: u8 = 13;
-const USBASP_MODE_PARITYN: u16 = 1;
-const USBASP_MODE_SETBAUD2400: u16 = 0x13;
+const USBASP_MODE_PARITYN: u8 = 1;
+const USBASP_MODE_SETBAUD2400: u8 = 0x13;
 
-pub const PACKET_SIZE: u16 = 8;
+pub const PACKET_SIZE: u8 = 8;
 
 fn is_device_corresponding(device: Device<GlobalContext>) -> Option<Device<GlobalContext>> {
     let device_descriptor = device.device_descriptor().ok()?;
@@ -34,7 +34,7 @@ pub fn find_device() -> Option<Device<GlobalContext>> {
 
 fn bits_from_buffer(bytes: &[u8; PACKET_SIZE as usize]) -> &[u8] {
     let buffer_size = bytes[0] as usize;
-    &bytes[1..(buffer_size + 1)]
+    &bytes[1..=buffer_size]
 }
 
 fn print_saut(pos: &mut u32, saut: Option<u32>) {
@@ -48,7 +48,7 @@ fn print_saut(pos: &mut u32, saut: Option<u32>) {
 }
 
 impl DisplayingMode {
-    pub fn print(&self, buffer: &[u8; PACKET_SIZE as usize], saut: Option<u32>, pos: &mut u32) {
+    pub fn print(self, buffer: &[u8; PACKET_SIZE as usize], saut: Option<u32>, pos: &mut u32) {
         let bytes = bits_from_buffer(buffer);
         match self {
             DisplayingMode::Binaire => {
@@ -98,7 +98,7 @@ impl SerialUsb for DeviceHandle<GlobalContext> {
     fn init_serial_usb(&self) -> Result<()> {
         let mut buffer = [0; 4];
         let cmd = [
-            USBASP_MODE_SETBAUD2400 as u8,
+            USBASP_MODE_SETBAUD2400,
             PACKET_SIZE as u8,
             USBASP_MODE_PARITYN as u8,
             0,
@@ -107,8 +107,8 @@ impl SerialUsb for DeviceHandle<GlobalContext> {
         let nb_bytes: usize = self.read_control(
             REQUEST_READ,
             USBASP_FUNC_SETSERIOS,
-            (PACKET_SIZE << 8) | USBASP_MODE_SETBAUD2400,
-            USBASP_MODE_PARITYN,
+            ((PACKET_SIZE as u16) << 8) | USBASP_MODE_SETBAUD2400 as u16,
+            USBASP_MODE_PARITYN as u16,
             &mut buffer,
             Duration::from_secs(2),
         )?;
