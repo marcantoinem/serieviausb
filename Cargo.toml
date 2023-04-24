@@ -18,9 +18,4 @@ clap = {version = "4.1.4", features = ["derive"] }
 derive_more = "0.99.17"
 ctrlc = "3.2.5"
 indicatif = "0.17.3"
-viuer = "0.6"
-resvg = {version = "0.29.0", features = ["raster-images"]}
-image = {version = "0.24.5", features = ["png"] }
-crc32fast = "1.3.2"
-terminal_size = "0.2.5"
 color-print = "0.3.4"

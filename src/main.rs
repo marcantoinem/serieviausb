@@ -24,12 +24,7 @@ fn serie_via_usb() -> Result<()> {
     let device = usb::find_device().context("La carte mère est introuvable.")?;
     let mut handle = device.open()?;
     handle.init_serial_usb()?;
-    if args.svg && args.lecture {
-        modes::read_svg(&mut handle, &sigint_requested, args.fichier)?;
-    } else if args.svg && args.ecriture {
-        let fichier = args.fichier.context("Fichier non fourni")?;
-        modes::write_svg(fichier, &handle, &sigint_requested)?;
-    } else if args.lecture {
+    if args.lecture {
         modes::read(&mut handle, &sigint_requested, args.affichage, args.retour)?;
     } else if args.ecriture {
         let fichier = args.fichier.context("Fichier non fourni")?;
