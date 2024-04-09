@@ -71,20 +71,15 @@ impl DisplayingMode {
             }
             DisplayingMode::Ascii => {
                 for byte in bytes {
-                    if !(byte.is_ascii_alphanumeric()
-                        || byte.is_ascii_control()
-                        || byte.is_ascii_whitespace()
-                        || byte.is_ascii_graphic())
-                    {
-                        continue;
-                    }
                     print!("{}", *byte as char);
                     print_saut(pos, saut);
                 }
             }
         }
         // Ignore error of flushing stdout
-        let Ok(_) = std::io::stdout().flush() else {return};
+        let Ok(_) = std::io::stdout().flush() else {
+            return;
+        };
     }
 }
 
