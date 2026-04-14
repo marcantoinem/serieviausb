@@ -50,31 +50,22 @@ fn print_saut(pos: &mut u32, saut: Option<u32>) {
 impl DisplayingMode {
     pub fn print(self, buffer: &[u8; PACKET_SIZE as usize], saut: Option<u32>, pos: &mut u32) {
         let bytes = bits_from_buffer(buffer);
-        match self {
-            DisplayingMode::Binaire => {
-                for byte in bytes {
+        for byte in bytes {
+            match self {
+                DisplayingMode::Binary => {
                     print!("{byte:b}");
-                    print_saut(pos, saut);
                 }
-            }
-            DisplayingMode::Decimal => {
-                for byte in bytes {
+                DisplayingMode::Decimal => {
                     print!("{byte}");
-                    print_saut(pos, saut);
                 }
-            }
-            DisplayingMode::Hexadecimal => {
-                for byte in bytes {
+                DisplayingMode::Hexadecimal => {
                     print!("{byte:X}");
-                    print_saut(pos, saut);
                 }
-            }
-            DisplayingMode::Ascii => {
-                for byte in bytes {
+                DisplayingMode::Ascii => {
                     print!("{}", *byte as char);
-                    print_saut(pos, saut);
                 }
             }
+            print_saut(pos, saut);
         }
         // Ignore error of flushing stdout
         let Ok(_) = std::io::stdout().flush() else {

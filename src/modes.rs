@@ -1,7 +1,7 @@
 use crate::{args::DisplayingMode, usb::SerialUsb};
 use anyhow::Result;
-use color_print::cprintln;
 use indicatif::{ProgressIterator, ProgressStyle};
+use owo_colors::OwoColorize;
 use rusb::{DeviceHandle, GlobalContext};
 use std::fs::File;
 use std::io::Read;
@@ -25,13 +25,15 @@ pub fn write(
     )?;
     for buffer in file_buffer.chunks(7).progress_with_style(style) {
         if sigint.load(Ordering::Relaxed) {
-            cprintln!("\n<red>Écriture interrompu par l'utilisateur</>");
+            println!("{}", "\nÉcriture interrompu par l'utilisateur".red());
             return Ok(());
         }
         handle.write_serial_usb(buffer)?;
         thread::sleep(WRITE_DELAY);
     }
-    cprintln!("<green>{} bits ont été écris.</>", file_buffer.len());
+
+    let len = file_buffer.len();
+    println!("{}{}", len.green(), " bits ont été écris.".green());
     Ok(())
 }
 
@@ -48,6 +50,6 @@ pub fn read(
         mode.print(&buffer, saut, &mut pos);
         thread::sleep(READ_DELAY);
     }
-    cprintln!("<red>Arrêt de lecture</>");
+    println!("{}", "Arrêt de lecture".red());
     Ok(())
 }
